@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <style>
+    body, div, section, header, footer {
+      -webkit-box-sizing: border-box;
+         -moz-box-sizing: border-box;
+              box-sizing: border-box;
+    }
+    
+    * {
+      font-size: inherit;
+    }
+
+    body {
+      font-size: 20px;
+      /* max-width: 48em; */
+      min-width: 20em;
+      width: 100%;
+      margin: 0 auto;
+      /* padding: 1em 2em; */
+      padding: 0 1em;
+      position: relative;
+    }
+
+    header {
+      text-align: center;
+      font-size: 1.6em;
+      margin-bottom: 1em;
+    }
+
+    header>div {
+      font-size: inherit;
+      margin: 0.5em;
+    }
+    
+    header[data-state=collapsed] {
+      margin: 0em;
+      font-size: 1em;
+    }
+    
+    header[data-state=collapsed]>div {
+      display: inline-block;
+    }
+    
+    section.panel {
+      display: none;
+      text-align: center;
+    }
+
+    section.panel[data-state=active] {
+      display: block;
+    }
+
+    section.panel>section {
+      margin: 1em 0;
+    }
+
+    button {
+      background: #3366CC;
+      color: #FFF;
+      border: none;
+      border-radius: 5px;
+      width: 100%;
+      max-width: 40em;
+      padding: 0.5em 0.8em;
+      margin: 0.5em 0;
+    }
+    
+    .number-panel>button {
+      display: inline-block;
+      width: 3em;
+    }
+
+    label {
+      display: block;
+      margin: 1em auto;
+    }
+
+    p {
+      margin: 0.5em 0;
+    }
+    
+    button.button-red {
+      background: #DC3912;
+    }
+
+    button.button-green {
+      background: #109618;
+    }
+    
+    button[disabled] {
+      background: #CCC !important;
+      color: #888;
+    }
+    
+    a, a:visited {
+      color: #3366CC;
+    }
+
+    a:active, a:hover {
+      color: #AAA;
+    }
+    
+    a#logout, a#unlock {
+      font-size: 0.7em;
+    }
+    
+    a#logout {
+      display: inline;
+    }
+    
+    a#unlock {
+      display: none;
+    }
+    
+    a#logout[data-state=locked] {
+      display: none;
+    }
+    
+    a#unlock[data-state=locked] {
+      display: inline;
+    }
+    
+    ol {
+      display: inline-block;
+    }
+    
+    #announce {
+      display: block;
+      border: 1px solid transparent;
+      font-size: 80%;
+      margin-top: 1em;
+      padding: 1em 2em;
+    }
+    
+    #announce[data-state=collapsed] {
+      display: none;
+    }
+
+    #announce.info {
+      border-color: #3366CC;
+      background: #3366CC22;
+    }
+
+    #announce.warning {
+      border-color: #FF9900;
+      background: #FF990022;
+    }
+
+    #announce.alert {
+      border-color: #DC3912;
+      background: #DC391222;
+    }
+
+    #announce.success {
+      border-color: #109618;
+      background: #10961822;
+    }
+    
+    iframe#ballot {
+      margin: auto auto 0 auto;
+      width: 94%;
+      border: none;
+      height: 650px;
+    }
+    
+    div.cover {
+      position: fixed;
+      display: none;
+      width: 100%;
+      height: 100%;
+      top: 0;
+      left: 0;
+      background: #00000066;
+      text-align: center;
+      padding: 5%;
+    }
+
+    div.cover[data-state=active] {
+      display: block;
+      z-index: 300;
+    }
+
+    span#circle {
+      display: inline-block;
+      width: 2.8em;
+      height: 2.8em;
+      border: 0.4em solid;
+      border-color: #888 #888 #888 transparent;
+      border-radius: 50%;
+      vertical-align: middle;
+      margin: 0;
+      line-height: 5em;
+      -webkit-animation: spin 1s infinite;
+         -moz-animation: spin 1s infinite;
+              animation: spin 1s infinite;
+    }
+    
+    div#modal>form#unlock {
+      display: inline-block;
+      background: #FFF;
+      width: 75%;
+      height: 80%;
+      padding: 2em;
+      border-radius: 2em;
+    }
+    
+    div#modal p {
+      font-size: 2em;
+    }
+    
+    .button-form>input {
+      font-size: 2em;
+      text-align: center;
+    }
+    
+    @-webkit-keyframes spin { 100% { -webkit-transform: rotate(-360deg); } }
+       @-moz-keyframes spin { 100% {    -moz-transform: rotate(-360deg); } }
+            @keyframes spin { 100% {         transform: rotate(-360deg); } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div id="app-title">NTU Vote 迷你投票系統</div>
+      <div id="election-title">----</div>
+      <div id="booth"></div>
+    </header>
+    <div id="loading" class="cover"><span id="circle"></span></div>
+    <div id="modal" class="cover">
+        <form id="unlock" class="button-form">
+          <p>請輸入解鎖碼</p>
+          <input type="password" name="code" id="unlock-code" pattern="\d{4}" required/>
+          <div class="number-panel">
+            <button type="button" value="1">1</button>
+            <button type="button" value="2">2</button>
+            <button type="button" value="3">3</button>
+            <button type="button" value="4">4</button>
+            <button type="button" value="5">5</button>
+            <button type="button" value="6">6</button>
+          </div>
+          <button type="submit" class="button-green">送出</button>
+          <button type="reset" class="button-red">重新輸入</button>
+          <button type="button" id="close">關閉</button>
+        </form>
+    </div>
+    <section id="login-panel" class="panel" data-state="active">
+      <section>請登入投票亭帳號。</section>
+      <form id="login">
+        <label for="booth-user">帳號：
+          <input type="text" name="boothUser" id="booth-user" required/>
+        </label>
+        <label for="booth-pass">密碼：
+          <input type="password" name="boothPass" id="booth-pass" required/>
+        </label>
+        <button type="submit" name="login" value="login">登入</button>
+      </form>
+    </section>
+    <section id="redeem-panel" class="panel">
+      <form id="redeem" class="button-form" data-state="active">
+        <input type="text" name="code" id="voucher-code" pattern="\d{6}" required/>
+        <div class="number-panel">
+          <button type="button" value="1">1</button>
+          <button type="button" value="2">2</button>
+          <button type="button" value="3">3</button>
+          <button type="button" value="4">4</button>
+          <button type="button" value="5">5</button>
+          <button type="button" value="6">6</button>
+          <button type="button" value="7">7</button>
+          <button type="button" value="8">8</button>
+          <button type="button" value="9">9</button>
+          <button type="button" value="0">0</button>
+        </div>
+        <button type="submit" class="button-green">送出</button>
+        <button type="reset" class="button-red">重新輸入</button>
+      </form>
+    </section>
+    <section id="load-panel" class="panel">
+      <section id="redeem-result"></section>
+      <form id="load">
+        <button type="submit">開始投票</button>
+      </form>
+    </section>
+    <section id="vote-panel" class="panel">
+      <iframe id="ballot"></iframe>
+    </section>
+    <section id="announce"></section>
+    <script>
+    /* Handy selectors */
+    var $ = function(s) {return document.querySelector(s)};
+    var $$ = function(s) {return document.querySelectorAll(s)};
+
+    /* Function to show the current section */
+    var show = function(panel, payloads) {
+      var panels = $$('section.panel');
+      for (var i = 0; i < panels.length; i++) {
+        panels[i].removeAttribute('data-state');
+      }
+      
+      var buttons = $$(panel + ' form button');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].removeAttribute('disabled');
+      }
+      
+      $(panel).setAttribute('data-state', 'active');
+      
+      payloads = payloads || {};
+      
+      for (var f in payloads) {
+        $(panel + ' ' + f).innerText = payloads[f];
+      }
+    }
+
+    /* Pending animation */
+    var startPending = function(panel) {
+      var buttons = $$(panel + ' button');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].setAttribute('disabled', '');
+      }
+      
+      var inputs = $$(panel + ' input');
+      for (var i = 0; i < inputs.length; i++) {
+        inputs[i].setAttribute('readonly', '');
+      }
+      
+      $('div#loading').setAttribute('data-state', 'active');
+    }
+    
+    var stopPending = function(panel) {
+      var buttons = $$(panel + ' button');
+      for (var i = 0; i < buttons.length; i++) {
+        buttons[i].removeAttribute('disabled')
+      }
+      
+      var inputs = $$(panel + ' input');
+      for (var i = 0; i < inputs.length; i++) {
+        inputs[i].removeAttribute('readonly');
+      }
+      
+      $('div#loading').removeAttribute('data-state');
+    }
+    
+    var resetPanel = function(panel) {
+      var inputs = $$(panel + ' input');
+      for (var i = 0; i < inputs.length; i++) {
+        inputs[i].value = ''
+      }
+    };
+
+    /* Function to alert */
+    var yell = function(s, type) {
+      $('#announce').innerText = s;
+      $('#announce').className = type || 'alert';
+    }
+    var yellConfirm = function(s) {confirm(s)};
+    var yellAsk = function(s) {prompt(s)};
+
+    var currentPanel = function() {return $$('section.panel[data-state=active] form')[0]};
+
+    /* Update authorization token */
+    function updateSecret(token) {
+      if (token) {
+        localStorage.setItem('authorization', token);
+        var inputs = $$('input.token');
+        for (var i = 0; i < inputs.length; i++) {
+          inputs[i].value = token;
+        }
+      } else {
+        localStorage.removeItem('authorization');
+        var inputs = $$('input');
+        for (var i = 0; i < inputs.length; i++) {
+          inputs[i].value = '';
+        }
+      }
+    }
+    
+    function updateBallotUrl(url) {
+      if (url) {
+        $('iframe#ballot').setAttribute('src', url);
+        localStorage.setItem('ballotUrl', url);
+      } else {
+        $('iframe#ballot').removeAttribute('src');
+        localStorage.removeItem('ballotUrl');
+      }
+    }
+    
+    /* Handler of authorization */
+    function onAuthFailure(err) {
+      stopPending('form#login');
+      updateSecret();
+      yell('登入已失效，請重新登入！', 'warning');
+    }
+
+    function onAuthSuccess(ret) {
+      if (ret.status !== 200) {
+        return onAuthFailure(Error(ret.error));
+      }
+      
+      stopPending('form#login');
+      prepareVoucher(ret.token, ret.body.displayName);
+      
+      if (ret.body.ballots) {
+        if (ret.body.status == 'voting') {
+          var url = localStorage.getItem('ballotUrl');
+          prepareVote(ret.token, url);
+        } else {
+          prepareLoad(ret.token, ret.body.ballots);
+        }
+      }
+    }
+
+    /* Handler of login */
+    function onLoginFailure(err) {
+      stopPending('form#login');
+      resetPanel('form#login');
+      yell('登入失敗，原因：' + err.message);
+    }
+
+    function onLoginSuccess(ret) {
+      if (ret.status !== 200) {
+        return onLoginFailure(Error(ret.error));
+      } else {
+        prepareVoucher(ret.token, ret.body.displayName);
+      }
+    }
+    
+    /* Handler of logout */
+    function onLogoutFailure(err, obj) {
+      stopPending(obj.id);
+      yell('登出失敗，原因：' + err.message);
+    }
+
+    function onLogoutSuccess(ret, obj) {
+      if (ret.status !== 200) {
+        return onLogoutFailure(Error(ret.error), obj);
+      }
+      
+      /* Activate */
+      stopPending(obj.id);
+      resetPanel(obj.id);
+
+      /* Renew */
+      updateSecret();
+
+      /* Show */
+      $('#booth').innerHTML = '';
+      show('section#login-panel');
+      yell('登出成功！', 'info');
+    }
+
+    function prepareVoucher(token, displayName) {
+      /* Activate */
+      stopPending('form#login');
+      resetPanel('form#login');
+
+      /* Renew */
+      updateSecret(token);
+      
+      $('div#booth').innerHTML = '【' + displayName + '投票亭】<a href="#" id="logout">登出</a> <a href="#" id="unlock">解鎖</a>';
+      
+      /* Reset */
+      $('header').removeAttribute('data-state');
+      $('#announce').removeAttribute('data-state');
+      
+      /* Event listener for logout */
+      $('a#logout').addEventListener('click', function(ev) {
+        ev.preventDefault();
+        
+        var current = currentPanel();
+        startPending(current.id);
+
+        var token = localStorage.getItem('authorization');
+        google.script.run
+          .withFailureHandler(onLogoutFailure)
+          .withSuccessHandler(onLogoutSuccess)
+          .withUserObject(current)
+          .logout({'token': token, 'body': {}});
+      });
+      
+      /* Event listener for unlock */
+      $('a#unlock').addEventListener('click', function(ev) {
+        ev.preventDefault();
+        $('div#modal').setAttribute('data-state', 'active');
+      });
+      
+      /* Show */
+      show('section#redeem-panel');
+    }
+    
+    /* Handler of redeem */
+    function onRedeemFailure(err) {
+      /* Activate */
+      stopPending('form#redeem');
+
+      /* Clear */
+      var voucher = $('input#voucher-code').value;
+      $('input#voucher-code').value = '';
+
+      yell('【' + voucher + '】兌換失敗，原因：' + err.message);
+    }
+
+    function onRedeemSuccess(ret) {
+      if (ret.status !== 200) {
+        return onRedeemFailure(Error(ret.error));
+      } else {
+        prepareLoad(ret.token, ret.body.ballots);
+      }
+    }
+    
+    function prepareLoad(token, ballots) {
+      /* Activate */
+      stopPending('form#redeem');
+      $('input#voucher-code').value = '';
+      
+      /* Renew */
+      updateSecret(token);
+      
+      /* Hide logout */
+      $('a#logout').setAttribute('data-state', 'locked');
+      $('a#unlock').setAttribute('data-state', 'locked');
+      
+      /* Render */
+      var display = '<p>領取票種如下：</p>';
+      if (ballots.length > 0) {
+        display = (
+          display +
+          '<ol>' +
+          ballots.map(function(el) {return '<li>'+ el.displayName + '</li>'}).join('') +
+          '</ol>'
+        );
+      } else {
+        display = display + '<p>無。</p>';
+      }
+
+      /* Show */
+      $('section#redeem-result').innerHTML = display;
+      show('section#load-panel');
+    }
+    
+    /* Handler of load */
+    function onLoadFailure(err) {
+      /* Activate */
+      stopPending('form#load');
+      
+      yell('載入票面失敗，原因：' + err.message);
+    }
+
+    function onLoadSuccess(ret) {
+      if (ret.status === 200) {
+        prepareVote(ret.token, ret.body.url);
+      } else {
+        yell('載入票面失敗，原因：' + err.message, 'alert');
+      }
+    }
+    
+    function prepareVote(token, url) {
+      /* Activate */
+      stopPending('form#load');
+      
+      /* Renew */
+      updateSecret(token);
+      
+      updateBallotUrl(url);
+      
+      /* Voting mode */
+      $('header').setAttribute('data-state', 'collapsed');
+      $('#announce').setAttribute('data-state', 'collapsed');
+      $('a#logout').setAttribute('data-state', 'locked');
+      $('a#unlock').setAttribute('data-state', 'locked');
+      
+      show('section#vote-panel');
+    }
+    
+    function onUnlockFailure(err) {
+      resetPanel('form#unlock');
+      stopPending('form#unlock');
+      $('div#modal').removeAttribute('data-state');
+      yell('解鎖失敗，原因：' + err.message, 'alert');
+      alert('解鎖失敗，原因：' + err.message);
+    }
+    
+    function onUnlockSuccess(ret) {
+      if (ret.status !== 200) {
+        return onUnlockFailure(Error(ret.error));
+      } else {
+        stopPending('form#unlock');
+        resetPanel('form#unlock');
+        $('div#modal').removeAttribute('data-state');
+        prepareVoucher(ret.token, ret.body.displayName);
+        updateBallotUrl();
+      }
+    }
+    
+    /* Setups for loading window */
+    window.addEventListener('load', function(ev) {
+      startPending('form#login');
+
+      /* Show the election title */
+      google.script.run
+        .withSuccessHandler(function(title) {$('#election-title').innerText = title})
+        .showTitle();
+      
+      /* Disable autocomplete and the default event of form submission */
+      var forms = $$('form');
+      for (var i = 0; i < forms.length; i++) {
+        forms[i].setAttribute('autocomplete', 'off');
+        forms[i].addEventListener('submit', function(ev) {ev.preventDefault()});
+      }
+
+      /* Check local storage for authorization */
+      var lsToken = localStorage.getItem('authorization');
+      if (lsToken) {
+        google.script.run
+          .withFailureHandler(onAuthFailure)
+          .withSuccessHandler(onAuthSuccess)
+          .authorize({'token': lsToken, 'body': {}});
+      } else {
+        stopPending('form#login');
+      }
+    });
+
+    /* Event listener to close the announce block */
+    $('body').addEventListener('click', function(ev) {
+      $('#announce').className = '';
+      $('#announce').innerText = '';
+    });
+    
+    /* Event listener for login */
+    $('form#login').addEventListener('submit', function(ev) {
+      startPending('form#login');
+      
+      google.script.run
+        .withFailureHandler(onLoginFailure)
+        .withSuccessHandler(onLoginSuccess)
+        .login({
+          'token': null,
+          'body': {
+            'username': ev.target.elements['boothUser'].value,
+            'password': ev.target.elements['boothPass'].value,
+          },
+        });
+    });
+    
+    /* Event listener for redeem */
+    $('form#redeem').addEventListener('submit', function(ev) {
+      startPending('form#redeem');
+      
+      ret = {
+        'token': localStorage.getItem('authorization'),
+        'body': {
+          'voucher': ev.target.elements['code'].value,
+        },
+      }
+      
+      google.script.run
+        .withFailureHandler(onRedeemFailure)
+        .withSuccessHandler(onRedeemSuccess)
+        .redeem(ret);
+    });
+    
+    /* Event listener for load */
+    $('form#load').addEventListener('submit', function(ev) {
+      startPending('form#load');
+      
+      ret = {
+        'token': localStorage.getItem('authorization'),
+        'body': {},
+      }
+      
+      google.script.run
+        .withFailureHandler(onLoadFailure)
+        .withSuccessHandler(onLoadSuccess)
+        .load(ret);
+    });
+    
+    /* Event listener for unlocker */
+    $('form#unlock').addEventListener('submit', function(ev) {
+      startPending('form#unlock');
+      
+      var ret = {
+        'token': localStorage.getItem('authorization'),
+        'body': {
+          'unlocker': ev.target.elements['code'].value,
+        },
+      }
+      
+      google.script.run
+        .withFailureHandler(onUnlockFailure)
+        .withSuccessHandler(onUnlockSuccess)
+        .unlock(ret);
+    });
+    
+    /* Event listener for number panel to type codes */
+    var buttons = $$('.number-panel button');
+    for (var i = 0; i < buttons.length; i++) {
+      buttons[i].addEventListener('click', function(ev) {
+        var target = ev.target.parentElement.parentElement.querySelector('input');
+        target.value = target.value + ev.target.value;
+      })
+    }
+    
+    /* Event listener for closing the modal */
+    $('div#modal button#close').addEventListener('click', function(ev) {
+      resetPanel('form#unlock');
+      $('div#modal').removeAttribute('data-state');
+    });
+    </script>
+  </body>
+</html>

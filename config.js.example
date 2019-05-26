@@ -1,0 +1,25 @@
+/* General Configuration */
+DB_ID = '__SPREADSHEET_ID__';
+SYS_DB_ID = '__SPREADSHEET_ID__';
+BOX_DB_ID = '__SPREADSHEET_ID__';
+ELECTION_TITLE = '';
+
+ALLOW_LOGIN_NUMBER = 1; // WIP
+LANGUAGE = '__ISO_639-1__';
+
+/* Authentication system settings */
+AUTHORIZATION_KEY = '__AUTHKEY_WITH_VOTING_SYS__';
+
+/* Redeem */
+VOUCHER_LENGTH = 6;
+VOUCHER_CHAR = '0123456789';
+
+/* Ballot Token */
+BALLOT_LENGTH = 32;
+BALLOT_CHAR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+
+/* Authorization */
+TOKEN_LENGTH = 64;
+TOKEN_CHAR = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+TOKEN_CACHE_TIME = 7200
+TOKEN_VALID_TIME = 32400
